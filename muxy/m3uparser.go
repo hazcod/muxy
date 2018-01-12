@@ -29,35 +29,35 @@ func isValidUrl(toTest string) bool {
 	return strings.Contains(strings.ToLower(toTest), "http")
 }
 
-func downloadFile(url string) (string, error) {
+func downloadFile(url string) ([]byte, error) {
 
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", errors.New("Could not request segment: " + err.Error())
+		return nil, errors.New("Could not request file: " + err.Error())
 	}
 
 	req.Header.Set("User-Agent", "vlc 1.1.0-git-20100330-0003")
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", errors.New("HTTP request failed: " + err.Error())
+		return nil, errors.New("HTTP request failed: " + err.Error())
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("M3U fetch returned code: " + strconv.Itoa(resp.StatusCode))
+		return nil, errors.New("Download returned code: " + strconv.Itoa(resp.StatusCode))
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return "", errors.New("Could not read file contents: " + err.Error())
+		return nil, errors.New("Could not read file contents: " + err.Error())
 	}
 
-	return string(bodyBytes), nil
+	return bodyBytes, nil
 }
 
 func getChannelPlaylist(m3uPath string) ([]Channel, error) {
@@ -97,7 +97,7 @@ func parseM3UFile(path string) (MediaPlaylistWrapper, error) {
 			return mediaWrappper, err
 		}
 
-		m3uContent = str
+		m3uContent = string(str)
 	} else {
 		log.Info("Using M3U file: " + path)
 

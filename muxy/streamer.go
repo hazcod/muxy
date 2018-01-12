@@ -15,51 +15,6 @@ func waitForNextSegment() {
 	time.Sleep(9 * time.Second)
 }
 
-func fetchSegment(segmentUrl string) ([]byte, error) {
-	log.Info("Downloading segment " + segmentUrl)
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", segmentUrl, nil)
-	if err != nil {
-		return nil, errors.New("Could not request segment: " + err.Error())
-	}
-
-	req.Header.Set("User-Agent", "vlc 1.1.0-git-20100330-0003")
-
-	response, err := client.Do(req)
-
-	defer response.Body.Close()
-
-	if err != nil || (response != nil && response.StatusCode != http.StatusOK) {
-
-		if response == nil {
-			return nil, errors.New("Could not fetch segment: " + err.Error())
-		}
-
-		if response.Header.Get("Retry-After") != "" {
-			// rate limited
-			log.Warning("Rate limited, waiting for " + response.Header.Get("Retry-After") + " seconds")
-			secWait, _ := strconv.Atoi(response.Header.Get("Retry-After"))
-
-			time.Sleep(time.Second * time.Duration(secWait))
-			return fetchSegment(segmentUrl)
-		}
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("Status code for segment is " + strconv.Itoa(response.StatusCode))
-	}
-
-	var segmentBytes []byte
-	_, err = response.Body.Read(segmentBytes)
-	if err != nil {
-		return nil, errors.New("Error while fetching segment: " + err.Error())
-	}
-
-	return segmentBytes, nil
-}
-
 func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 	streamID := filepath.Base(channelPlaylist)
@@ -88,14 +43,14 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 		for _, segment := range segments {
 			fullSegmentUrl := segmentHost + segment.url
 
-			segmentBytes, err := fetchSegment(fullSegmentUrl)
+			segmentBytes, err := downloadFile(fullSegmentUrl)
 			if err != nil {
 				log.Warning("Error when fetching segment: " + err.Error())
 				sendError(writer)
 				return
 			}
 
-			log.Info("Downloaded & sending " + strconv.Itoa(len(segmentBytes)) + " bytes")
+			log.Info("Sending to client " + strconv.Itoa(len(segmentBytes)) + " bytes")
 			writer.Write(segmentBytes)
 
 			waitForNextSegment()
