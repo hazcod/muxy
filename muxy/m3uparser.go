@@ -67,7 +67,7 @@ func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 		return nil, errors.New(err.Error())
 	}
 
-	var channels []Channel;
+	var channels []Channel
 	for index, segment := range mediaPlayList.Segments {
 
 		if true == strings.Contains(segment.Title, "▬") {
@@ -138,7 +138,7 @@ func parseM3UFile(path string) (MediaPlaylistWrapper, error) {
 			mediaWrappper.MediaPlaylist.Segments = mediaWrappper.MediaPlaylist.Segments[0 : mediaWrappper.MediaPlaylist.Count()-1]
 
 		default:
-			return mediaWrappper, errors.New("Unknown m3u type")
+			return mediaWrappper, errors.New("unknown m3u type")
 	}
 
 	return mediaWrappper, nil

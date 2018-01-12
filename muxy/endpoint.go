@@ -66,7 +66,7 @@ func getLineup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var lineup []map[string]string;
+	var lineup []map[string]string
 
 	for _, channel := range channels {
 		lineup = append(lineup, map[string]string{

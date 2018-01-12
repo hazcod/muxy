@@ -58,9 +58,9 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 			response, err := client.Do(req)
 
-			defer response.Body.Close()
-
 			if err != nil || (response != nil && response.StatusCode != http.StatusOK) {
+
+				response.Body.Close()
 
 				if response == nil {
 					log.Error("Could not fetch segment: " + err.Error())
@@ -81,6 +81,7 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 			if response.StatusCode != http.StatusOK {
 				log.Warning("Status code is " + strconv.Itoa(response.StatusCode))
+				response.Body.Close()
 				continue
 			}
 
@@ -90,6 +91,8 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 				log.Error("Error while fetching segment: " + err.Error())
 				break refetch
 			}
+
+			response.Body.Close()
 
 			log.Info("Downloaded & sending " + strconv.Itoa(bytesNum) + " bytes")
 			writer.Write(segmentBytes)
@@ -109,7 +112,7 @@ func FetchStreamSegments(url string, streamID string) ([]Channel, error) {
 		return nil, errors.New("Could not get channel playlist: " + err.Error())
 	}
 
-	var channels []Channel;
+	var channels []Channel
 	for index, segment := range mediaPlayList.Segments {
 
 		if true == strings.Contains(segment.Title, "▬") {
