@@ -18,3 +18,6 @@ and serves the MPEG stream to Plex.
 
 ## Building
 You just need `go` and `make`. To build, do a `make`.
+
+## Credits
+Big thanks goes out to @jkaberg for his work on `tvhProxy`, where I got the idea from.
