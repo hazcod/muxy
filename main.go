@@ -4,6 +4,7 @@ import (
 	"muxy/muxy"
 	"flag"
 	"fmt"
+	log "github.com/golang/glog"
 )
 
 func main() {
@@ -26,5 +27,6 @@ func main() {
 	muxy.SetMaxStreams(*maxStreams)
 	muxy.SetM3UFile(m3uPath)
 
+	log.Info("Running muxy..")
 	muxy.RunListener()
 }

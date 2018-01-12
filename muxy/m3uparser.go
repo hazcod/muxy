@@ -9,10 +9,8 @@ import (
 	log "github.com/golang/glog"
 	"strings"
 	"strconv"
-	"time"
+	"encoding/base64"
 )
-
-var channelCache []Channel
 
 type Channel struct {
 	number string
@@ -42,7 +40,7 @@ func downloadFile(url string, result string) (string, error) {
 
 	resp, err := http.Get(url)
 
-	if err != nil {
+	if err != nil || (resp != nil && (resp.StatusCode >= 400)){
 		return "", errors.New("HTTP request failed: " + err.Error())
 	}
 
@@ -59,9 +57,10 @@ func downloadFile(url string, result string) (string, error) {
 }
 
 func removeTempFile() {
-	os.Remove(tempM3Upath)
+	os.Remove(tempM3UFile)
 }
 
+/*
 func isFileFresh(path string) bool {
 	info, err := os.Stat(path)
 
@@ -72,21 +71,43 @@ func isFileFresh(path string) bool {
 	expiryDate := time.Now().Add(time.Duration(cacheTimeMinutes * -1) * time.Minute)
 	return true == info.ModTime().After(expiryDate)
 }
+*/
 
-func parseM3UFile(path string) ([]Channel, error) {
+func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 
-	if channelCache != nil && isFileFresh(tempM3Upath) == true {
-		log.Info("Using channel cache")
-		return channelCache, nil
+	mediaPlayList, err := parseM3UFile(m3uPath, tempM3UFile)
+	if err != nil {
+		return nil, errors.New(err.Error())
 	}
+
+	var channels []Channel;
+	for index, segment := range mediaPlayList.Segments {
+
+		if true == strings.Contains(segment.Title, "▬") {
+			continue
+		}
+
+		encodedStreamURL := base64.StdEncoding.EncodeToString([]byte(segment.URI))
+		modifiedSegmentURI := listenUrl + "/stream/" + encodedStreamURL
+
+		log.Info("Adding channel{" + "0." + strconv.Itoa(index) + "," + segment.Title + "," + modifiedSegmentURI + "}")
+		channels = append(channels, Channel{"0." + strconv.Itoa(index), segment.Title, modifiedSegmentURI})
+	}
+
+	return channels, nil
+}
+
+func parseM3UFile(path string, temp string) (MediaPlaylistWrapper, error) {
+
+	var mediaWrappper MediaPlaylistWrapper
 
 	if isValidUrl(path) == true {
 		log.Info("Downloading " + path)
 
-		downloadedPath, err := downloadFile(path, tempM3Upath)
+		downloadedPath, err := downloadFile(path, temp)
 
 		if err != nil {
-			return nil, err
+			return mediaWrappper, err
 		}
 
 		path = downloadedPath
@@ -97,7 +118,7 @@ func parseM3UFile(path string) ([]Channel, error) {
 	readFile, err := os.Open(path)
 
 	if err != nil {
-		return nil, errors.New("Could not open file " + path)
+		return mediaWrappper, errors.New("Could not open file " + path)
 	}
 
 	defer readFile.Close()
@@ -105,20 +126,19 @@ func parseM3UFile(path string) ([]Channel, error) {
 	fileStat, err := readFile.Stat()
 
 	if err != nil {
-		return nil, errors.New("Could not examine file " + path)
+		return mediaWrappper, errors.New("Could not examine file " + path)
 	}
 
 	if fileStat.Size() == 0 {
-		return nil, errors.New("M3U file is empty")
+		return mediaWrappper, errors.New("M3U file is empty")
 	}
 
 	playList, listType, err := m3u8.DecodeFrom(readFile, false)
 
 	if err != nil {
-		return nil, errors.New("Could not parse M3U: " + err.Error())
+		return mediaWrappper, errors.New("Could not parse M3U: " + err.Error())
 	}
 
-	var mediaWrappper MediaPlaylistWrapper
 	switch listType {
 		case m3u8.MEDIA:
 			mediaWrappper.MediaPlaylist = playList.(*m3u8.MediaPlaylist)
@@ -126,24 +146,9 @@ func parseM3UFile(path string) ([]Channel, error) {
 			mediaWrappper.MediaPlaylist.Segments = mediaWrappper.MediaPlaylist.Segments[0 : mediaWrappper.MediaPlaylist.Count()-1]
 
 		default:
-			return nil, errors.New("Unknown m3u type")
+			return mediaWrappper, errors.New("Unknown m3u type")
 	}
 
-	var channels []Channel;
-	for index, segment := range mediaWrappper.Segments {
-
-		if true == strings.Contains(segment.Title, "▬") {
-			continue
-		}
-
-		// FetchStreamUrl(segment.URI)
-
-		log.Info("Adding channel{" + "0." + strconv.Itoa(index) + "," + segment.Title + "," + segment.URI + "}")
-		channels = append(channels, Channel{"0." + strconv.Itoa(index), segment.Title, segment.URI})
-	}
-
-	channelCache = channels
-
-	return channelCache, nil
+	return mediaWrappper, nil
 }
 

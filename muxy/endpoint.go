@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"github.com/gorilla/mux"
 	log "github.com/golang/glog"
+	"encoding/base64"
 )
 
 func sendError(w http.ResponseWriter) {
@@ -34,6 +35,19 @@ func sendJson(w http.ResponseWriter, data interface{}) {
 	w.Write(dataBytes)
 }
 
+func streamChannel(w http.ResponseWriter, r *http.Request) {
+	encodedStreamURI := mux.Vars(r)["link"]
+
+	decodedStreamURI, err := base64.StdEncoding.DecodeString(encodedStreamURI)
+	if err != nil {
+		log.Error("Could not decode stream URI: " + encodedStreamURI)
+		sendError(w)
+		return
+	}
+
+	startChannelStream(w, string(decodedStreamURI))
+}
+
 func getLineupStatus(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, map[string]interface{}{
 		"ScanInProgress": "0",
@@ -44,7 +58,7 @@ func getLineupStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLineup(w http.ResponseWriter, r *http.Request) {
-	channels, err := parseM3UFile(m3ufile)
+	channels, err := getChannelPlaylist(m3ufile)
 
 	if err != nil {
 		log.Error("Could not get channels: " + err.Error())
@@ -104,19 +118,21 @@ func SetListenPort(port int) {
 }
 
 func SetTempM3UPath(path string) {
-	tempM3Upath = path
+	tempM3UFile = path
 }
 
 func RunListener() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/device.json", getDeviceInfo).Methods("GET", "POST")
-	router.HandleFunc("/discover.json", getDeviceInfo).Methods("GET", "POST")
+	router.HandleFunc("/device.json", getDeviceInfo).Methods("GET")
+	router.HandleFunc("/discover.json", getDeviceInfo).Methods("GET")
 
-	router.HandleFunc("/lineup_status.json", getLineupStatus).Methods("GET", "POST")
-	router.HandleFunc("/lineup.json", getLineup).Methods("GET", "POST")
+	router.HandleFunc("/lineup_status.json", getLineupStatus).Methods("GET")
+	router.HandleFunc("/lineup.json", getLineup).Methods("GET")
 
 	router.HandleFunc("/lineup.post", doNothing).Methods("GET", "POST")
+
+	router.HandleFunc("/stream/{link:.*}", streamChannel).Methods("GET")
 
 	removeTempFile()
 
