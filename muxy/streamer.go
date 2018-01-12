@@ -42,7 +42,7 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 		for _, segment := range segments {
 
-			if ! strings.HasPrefix(segment.url, ".ts") {
+			if ! strings.HasSuffix(segment.url, ".ts") {
 				log.Error("Not a TS file: " + segment.url)
 				sendError(writer)
 				return
