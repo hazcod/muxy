@@ -2,10 +2,11 @@ package muxy
 
 import "strconv"
 
-var m3ufile = "playlist.m3u"
-var listenPort = 8080
-var listenHost = "127.0.0.1"
-var tunerCount = 1
+var m3ufile string
+var listenPort int
+var listenHost string
+var tunerCount int
+
 var userAgent = "VLC";
 var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
 
