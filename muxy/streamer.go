@@ -1,7 +1,6 @@
 package muxy
 
 import (
-	"os"
 	log "github.com/golang/glog"
 	"errors"
 	"net/http"
@@ -11,14 +10,6 @@ import (
 	"net/url"
 	"time"
 )
-
-func prepareCacheDir(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return os.MkdirAll(path, os.ModePerm)
-	}
-
-	return nil
-}
 
 func waitForNextSegment() {
 	time.Sleep(9 * time.Second)
