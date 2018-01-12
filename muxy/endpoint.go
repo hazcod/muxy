@@ -117,10 +117,6 @@ func SetListenPort(port int) {
 	listenPort = port
 }
 
-func SetTempM3UPath(path string) {
-	tempM3UFile = path
-}
-
 func RunListener() {
 	router := mux.NewRouter()
 
@@ -133,8 +129,6 @@ func RunListener() {
 	router.HandleFunc("/lineup.post", doNothing).Methods("GET", "POST")
 
 	router.HandleFunc("/stream/{link:.*}", streamChannel).Methods("GET")
-
-	removeTempFile()
 
 	err := http.ListenAndServe(
 		listenHost + ":" + strconv.Itoa(listenPort),

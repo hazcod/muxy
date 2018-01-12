@@ -10,7 +10,6 @@ import (
 func main() {
 	listenHost := flag.String("host", "localhost", "What address to listen on.")
 	listenPort := flag.Int("port", 8080, "What port to listen on.")
-	tempPath   := flag.String("temp", "/tmp/m3u", "What location to store the downloaded M3U file.")
 	maxStreams := flag.Int("streams", 1, "How many streams can be played simultaneously.")
 	flag.Parse()
 
@@ -23,7 +22,6 @@ func main() {
 
 	muxy.SetListenHost(*listenHost)
 	muxy.SetListenPort(*listenPort)
-	muxy.SetTempM3UPath(*tempPath)
 	muxy.SetMaxStreams(*maxStreams)
 	muxy.SetM3UFile(m3uPath)
 

@@ -63,13 +63,13 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 				break refetch
 			}
 
-			req.Header.Set("User-Agent", "VLC")
+			req.Header.Set("User-Agent", "vlc 1.1.0-git-20100330-0003")
 
 			response, err := client.Do(req)
 
 			defer response.Body.Close()
 
-			if err != nil || (response != nil && response.StatusCode != 200) {
+			if err != nil || (response != nil && response.StatusCode != http.StatusOK) {
 
 				if response == nil {
 					log.Error("Could not fetch segment: " + err.Error())
@@ -80,12 +80,15 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 					// rate limited
 					log.Warning("Rate limited, waiting for " + response.Header.Get("Retry-After") + " seconds")
 					secWait, _ := strconv.Atoi(response.Header.Get("Retry-After"))
+
+					writer.WriteHeader(503)
+
 					time.Sleep(time.Second * time.Duration(secWait))
 					break refetch
 				}
 			}
 
-			if response.StatusCode != 200 {
+			if response.StatusCode != http.StatusOK {
 				log.Warning("Status code is " + strconv.Itoa(response.StatusCode))
 				continue
 			}
@@ -103,20 +106,14 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 			waitForNextSegment()
 		}
 	}
+
 }
 
 func FetchStreamSegments(url string, streamID string) ([]Channel, error) {
 
-	tempStreamPath := tempTSDirectory + "/" + streamID
-	log.Info("Stream temp dir will be " + tempStreamPath)
+	log.Info("Fetching segments for stream " + streamID)
 
-	if nil != prepareCacheDir(tempStreamPath) {
-		return nil, errors.New("Could not create stream cache dir: " + tempStreamPath)
-	}
-
-	tempStreamFilename := tempStreamPath + "/" + streamID
-
-	mediaPlayList, err := parseM3UFile(url, tempStreamFilename)
+	mediaPlayList, err := parseM3UFile(url)
 	if err != nil {
 		return nil, errors.New("Could not get channel playlist: " + err.Error())
 	}

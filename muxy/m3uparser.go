@@ -4,12 +4,12 @@ import (
 	"github.com/grafov/m3u8"
 	"os"
 	"net/http"
-	"io"
 	"errors"
 	log "github.com/golang/glog"
 	"strings"
 	"strconv"
 	"encoding/base64"
+	"io/ioutil"
 )
 
 type Channel struct {
@@ -29,53 +29,40 @@ func isValidUrl(toTest string) bool {
 	return strings.Contains(strings.ToLower(toTest), "http")
 }
 
-func downloadFile(url string, result string) (string, error) {
-	out, err := os.Create(result)
+func downloadFile(url string) (string, error) {
 
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", errors.New("Could not create temp M3U file: " + err.Error())
+		return "", errors.New("Could not request segment: " + err.Error())
 	}
 
-	defer out.Close()
+	req.Header.Set("User-Agent", "vlc 1.1.0-git-20100330-0003")
+	resp, err := client.Do(req)
 
-	resp, err := http.Get(url)
-
-	if err != nil || (resp != nil && (resp.StatusCode >= 400)){
+	if err != nil {
 		return "", errors.New("HTTP request failed: " + err.Error())
 	}
 
 	defer resp.Body.Close()
 
-	_, err = io.Copy(out, resp.Body)
-
-	if err != nil {
-		return "", errors.New("Could not copy to temp path: " + err.Error())
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("M3U fetch returned code: " + strconv.Itoa(resp.StatusCode))
 	}
 
-	log.Info("Downloaded to " + result)
-	return result, nil
-}
-
-func removeTempFile() {
-	os.Remove(tempM3UFile)
-}
-
-/*
-func isFileFresh(path string) bool {
-	info, err := os.Stat(path)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return false
+		return "", errors.New("Could not read file contents: " + err.Error())
 	}
 
-	expiryDate := time.Now().Add(time.Duration(cacheTimeMinutes * -1) * time.Minute)
-	return true == info.ModTime().After(expiryDate)
+	return string(bodyBytes), nil
 }
-*/
 
 func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 
-	mediaPlayList, err := parseM3UFile(m3uPath, tempM3UFile)
+	mediaPlayList, err := parseM3UFile(m3uPath)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -97,43 +84,48 @@ func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 	return channels, nil
 }
 
-func parseM3UFile(path string, temp string) (MediaPlaylistWrapper, error) {
+func parseM3UFile(path string) (MediaPlaylistWrapper, error) {
 
 	var mediaWrappper MediaPlaylistWrapper
+	var m3uContent string
 
 	if isValidUrl(path) == true {
 		log.Info("Downloading " + path)
 
-		downloadedPath, err := downloadFile(path, temp)
-
+		str, err := downloadFile(path)
 		if err != nil {
 			return mediaWrappper, err
 		}
 
-		path = downloadedPath
+		m3uContent = str
+	} else {
+		log.Info("Using M3U file: " + path)
+
+		readFile, err := os.Open(path)
+		if err != nil {
+			return mediaWrappper, errors.New("Could not open file " + path)
+		}
+
+		defer readFile.Close()
+
+		fileStat, err := readFile.Stat()
+		if err != nil {
+			return mediaWrappper, errors.New("Could not examine file " + path)
+		}
+
+		if fileStat.Size() == 0 {
+			return mediaWrappper, errors.New("M3U file is empty")
+		}
+
+		bytesRead, err := ioutil.ReadAll(readFile)
+		if err != nil {
+			return mediaWrappper, errors.New("Could not read M3U: " + err.Error())
+		}
+
+		m3uContent = string(bytesRead)
 	}
 
-	log.Info("Using M3U file: " + path)
-
-	readFile, err := os.Open(path)
-
-	if err != nil {
-		return mediaWrappper, errors.New("Could not open file " + path)
-	}
-
-	defer readFile.Close()
-
-	fileStat, err := readFile.Stat()
-
-	if err != nil {
-		return mediaWrappper, errors.New("Could not examine file " + path)
-	}
-
-	if fileStat.Size() == 0 {
-		return mediaWrappper, errors.New("M3U file is empty")
-	}
-
-	playList, listType, err := m3u8.DecodeFrom(readFile, false)
+	playList, listType, err := m3u8.DecodeFrom(strings.NewReader(m3uContent), false)
 
 	if err != nil {
 		return mediaWrappper, errors.New("Could not parse M3U: " + err.Error())

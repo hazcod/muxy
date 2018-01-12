@@ -6,8 +6,6 @@ var m3ufile = "playlist.m3u"
 var listenPort = 8080
 var listenHost = "localhost"
 var tunerCount = 1
-var tempM3UFile = "/tmp/muxy/m3u"
-var tempTSDirectory = "/tmp/muxy/ts"
 
 var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
 var deviceInfo = map[string]string{
