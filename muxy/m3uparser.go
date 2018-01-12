@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"time"
+	"regexp"
 )
 
 type Channel struct {
@@ -84,8 +85,15 @@ func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 		encodedStreamURL := base64.StdEncoding.EncodeToString([]byte(segment.URI))
 		modifiedSegmentURI := listenUrl + "/stream/" + encodedStreamURL
 
-		log.Info("Adding channel{" + "0." + strconv.Itoa(index) + "," + segment.Title + "," + modifiedSegmentURI + "}")
-		channels = append(channels, Channel{"0." + strconv.Itoa(index), segment.Title, modifiedSegmentURI})
+
+		reg, err := regexp.Compile("[^a-zA-Z0-9 ]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		cleanSegmentName := strings.Trim(reg.ReplaceAllString(segment.Title, ""), " ")
+
+		log.Info("Adding channel{" + "0." + strconv.Itoa(index) + "," + cleanSegmentName + "," + modifiedSegmentURI + "}")
+		channels = append(channels, Channel{"0." + strconv.Itoa(index), cleanSegmentName, modifiedSegmentURI})
 	}
 
 	return channels, nil
