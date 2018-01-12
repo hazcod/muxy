@@ -14,7 +14,7 @@ import (
 	"regexp"
 )
 
-var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9]+")
+var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9 ]+")
 
 type Channel struct {
 	number string
