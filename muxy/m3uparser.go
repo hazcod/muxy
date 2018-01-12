@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"encoding/base64"
 	"io/ioutil"
+	"time"
 )
 
 type Channel struct {
@@ -58,8 +59,9 @@ func downloadFile(url string) ([]byte, error) {
 	}
 
 	if len(bodyBytes) == 0 {
+		// retry because something went wrong apparently
+		time.Sleep(time.Second * 5)
 		return downloadFile(url)
-		//return nil, errors.New("Downloaded empty file from " + url)
 	}
 
 	return bodyBytes, nil
