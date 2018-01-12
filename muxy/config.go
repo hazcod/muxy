@@ -8,15 +8,16 @@ var listenHost = "localhost"
 var tunerCount = 1
 var userAgent = "QuickTime/7.5";
 var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
-var deviceInfo = map[string]string{
+
+var deviceInfo = map[string]interface{}{
 	"FriendlyName": "muxy",
 	"Manufacturer" : "Silicondust",
 	"ModelNumber": "HDTC-2US",
 	"FirmwareName": "hdhomeruntc_atsc",
-	"TunerCount": strconv.Itoa(tunerCount),
-	"FirmwareVersion": "20150826",
+	"TunerCount": tunerCount,
+	"FirmwareVersion": "20170930",
 	"DeviceID": "12345678",
-	"DeviceAuth": "test1234",
-	"BaseURL": listenUrl + "/",
+	"DeviceAuth": "lasdfkgkdskfksdkfsds",
+	"BaseURL": listenUrl,
 	"LineupURL": listenUrl + "/lineup.json",
 }

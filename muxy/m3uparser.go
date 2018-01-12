@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"time"
 	"regexp"
+	"io"
 )
 
 var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9 ]+")
@@ -33,7 +34,7 @@ func isValidUrl(toTest string) bool {
 	return strings.Contains(strings.ToLower(toTest), "http")
 }
 
-func downloadFile(url string) ([]byte, error) {
+func downloadStreamFile(url string) (io.ReadCloser, error) {
 
 	client := &http.Client{}
 
@@ -43,6 +44,33 @@ func downloadFile(url string) ([]byte, error) {
 	}
 
 	req.Header.Set("User-Agent", userAgent)
+
+	log.Info("Downloading (stream) " + url)
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, errors.New("HTTP request failed: " + err.Error())
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("Download returned code: " + strconv.Itoa(resp.StatusCode))
+	}
+
+	return resp.Body, nil
+}
+
+func downloadReadFile(url string) ([]byte, error) {
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.New("Could not request file: " + err.Error())
+	}
+
+	req.Header.Set("User-Agent", userAgent)
+
+	log.Info("Downloading " + url)
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -64,7 +92,7 @@ func downloadFile(url string) ([]byte, error) {
 	if len(bodyBytes) == 0 {
 		// retry because something went wrong apparently
 		time.Sleep(time.Second * 5)
-		return downloadFile(url)
+		return downloadReadFile(url)
 	}
 
 	return bodyBytes, nil
@@ -108,7 +136,7 @@ func parseM3UFile(path string) (MediaPlaylistWrapper, error) {
 	if isValidUrl(path) == true {
 		log.Info("Downloading " + path)
 
-		str, err := downloadFile(path)
+		str, err := downloadReadFile(path)
 		if err != nil {
 			return mediaWrappper, err
 		}

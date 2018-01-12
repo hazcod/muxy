@@ -10,6 +10,7 @@ import (
 )
 
 func sendError(w http.ResponseWriter) {
+	log.Info("Sending errorcode 500")
 	w.WriteHeader(500)
 }
 
@@ -30,6 +31,10 @@ func sendJson(w http.ResponseWriter, data interface{}) {
 		dataBytes = []byte(data.(string))
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+
+	log.Info("Sending: " + string(dataBytes))
+
 	w.Write(dataBytes)
 }
 
@@ -48,10 +53,10 @@ func streamChannel(w http.ResponseWriter, r *http.Request) {
 
 func getLineupStatus(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, map[string]interface{}{
-		"ScanInProgress": "0",
-		"ScanPossible": "0",
+		"ScanInProgress": 1,
+		"ScanPossible": 1,
 		"Source": "Cable",
-		"SourceList": []string{"Cable", "Antenna"},
+		"SourceList": []string{"Cable"},
 	})
 }
 
@@ -83,6 +88,28 @@ func getDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 func doNothing(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, nil)
+}
+
+func getDeviceXmlInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/xml")
+
+	str := `<root xmlns="urn:schemas-upnp-org:device-1-0">
+    <specVersion>
+        <major>1</major>
+        <minor>0</minor>
+    </specVersion>
+    <URLBase>` + listenUrl + `</URLBase>
+    <device>
+        <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+        <friendlyName>muxy</friendlyName>
+        <manufacturer>Silicondust</manufacturer>
+        <modelName>HDTC-2US</modelName>
+        <modelNumber>HDTC-2US</modelNumber>
+        <serialNumber></serialNumber>
+        <UDN>uuid:12345678</UDN>
+    </device>
+</root>`
+	w.Write([]byte(str))
 }
 
 func logRequest(handler http.Handler) http.Handler {
@@ -127,6 +154,9 @@ func RunListener() {
 	router.HandleFunc("/lineup.post", doNothing).Methods("GET", "POST")
 
 	router.HandleFunc("/stream/{link:.*}", streamChannel).Methods("GET")
+
+	router.HandleFunc("/", getDeviceXmlInfo).Methods("GET")
+	router.HandleFunc("/device.xml", getDeviceXmlInfo).Methods("GET")
 
 	err := http.ListenAndServe(
 		listenHost + ":" + strconv.Itoa(listenPort),

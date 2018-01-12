@@ -9,7 +9,10 @@ import (
 	"strconv"
 	"net/url"
 	"time"
+	"bufio"
 )
+
+var readBufSizeByes = 10000;
 
 func waitForNextSegment() {
 	time.Sleep(9 * time.Second)
@@ -48,18 +51,36 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 				return
 			}
 
-			fullSegmentUrl := segmentHost + segment.url
-
-			segmentBytes, err := downloadFile(fullSegmentUrl)
-			if err != nil {
-				log.Warning("Error when fetching segment " + fullSegmentUrl + " : " + err.Error())
-				sendError(writer)
-				return
+			fullSegmentUrl := segment.url
+			if strings.HasPrefix(fullSegmentUrl, "/") {
+				fullSegmentUrl = segmentHost + fullSegmentUrl
 			}
 
-			log.Info("Sending to client " + strconv.Itoa(len(segmentBytes)) + " bytes")
-			writer.Write(segmentBytes)
+			body, err := downloadStreamFile(fullSegmentUrl)
+			if err != nil {
+				body.Close()
+				log.Error("Could not download segment: " + err.Error())
+				continue
+			}
 
+			writer.Header().Set("Content-Type", "video/mp2t")
+
+			reader := bufio.NewReader(body)
+
+			for {
+
+				line, _, err := reader.ReadLine()
+
+				if err != nil {
+					log.Error("Reading line error: " + err.Error())
+					body.Close()
+					break
+				}
+
+				writer.Write(line)
+			}
+
+			body.Close()
 			waitForNextSegment()
 		}
 
@@ -68,6 +89,11 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 }
 
 func FetchStreamSegments(url string, streamID string) ([]Channel, error) {
+
+	if strings.HasSuffix(url, ".ts") {
+		log.Info("No channel playlist, so returning .ts url")
+		return []Channel{ {"0.0", streamID,url} }, nil
+	}
 
 	log.Info("Fetching segments for stream " + streamID)
 
