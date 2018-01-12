@@ -92,6 +92,8 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 			bytesNum, err := response.Body.Read(segmentBytes)
 			if err != nil {
 				log.Error("Error while fetching segment: " + err.Error())
+				response.Body.Close()
+
 				break refetch
 			}
 
