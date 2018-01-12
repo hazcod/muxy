@@ -83,8 +83,10 @@ func FetchStreamSegments(url string, streamID string) ([]Channel, error) {
 			continue
 		}
 
-		log.Info("Adding Segment{" + "0." + strconv.Itoa(index) + "," + segment.Title + "," + segment.URI + "}")
-		channels = append(channels, Channel{"0." + strconv.Itoa(index), segment.Title, segment.URI})
+		cleanSegmentTitle := sanitizeName(segment.Title)
+
+		log.Info("Adding Segment{" + "0." + strconv.Itoa(index) + "," + cleanSegmentTitle + "," + segment.URI + "}")
+		channels = append(channels, Channel{"0." + strconv.Itoa(index), cleanSegmentTitle, segment.URI})
 	}
 
 	return channels, nil

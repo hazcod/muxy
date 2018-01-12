@@ -14,7 +14,7 @@ import (
 	"regexp"
 )
 
-var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9 ]+")
+var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9]+")
 
 type Channel struct {
 	number string
@@ -71,7 +71,7 @@ func downloadFile(url string) ([]byte, error) {
 }
 
 func sanitizeName(input string) string {
-	return strings.Trim(cleanNameRegex.ReplaceAllString(input, ""), " ")
+	return strings.TrimSpace(cleanNameRegex.ReplaceAllString(input, ""))
 }
 
 func getChannelPlaylist(m3uPath string) ([]Channel, error) {
