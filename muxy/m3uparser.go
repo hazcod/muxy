@@ -57,6 +57,11 @@ func downloadFile(url string) ([]byte, error) {
 		return nil, errors.New("Could not read file contents: " + err.Error())
 	}
 
+	if len(bodyBytes) == 0 {
+		return downloadFile(url)
+		//return nil, errors.New("Downloaded empty file from " + url)
+	}
+
 	return bodyBytes, nil
 }
 

@@ -30,7 +30,7 @@ func sendJson(w http.ResponseWriter, data interface{}) {
 		dataBytes = []byte(data.(string))
 	}
 
-	log.Info("Sending: " + string(dataBytes))
+	//log.Info("Sending: " + string(dataBytes))
 
 	w.Write(dataBytes)
 }

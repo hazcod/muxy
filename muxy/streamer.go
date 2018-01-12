@@ -41,11 +41,18 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 		}
 
 		for _, segment := range segments {
+
+			if ! strings.HasPrefix(segment.url, ".ts") {
+				log.Error("Not a TS file: " + segment.url)
+				sendError(writer)
+				return
+			}
+
 			fullSegmentUrl := segmentHost + segment.url
 
 			segmentBytes, err := downloadFile(fullSegmentUrl)
 			if err != nil {
-				log.Warning("Error when fetching segment: " + err.Error())
+				log.Warning("Error when fetching segment " + fullSegmentUrl + " : " + err.Error())
 				sendError(writer)
 				return
 			}
