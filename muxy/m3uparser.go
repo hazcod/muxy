@@ -14,6 +14,8 @@ import (
 	"regexp"
 )
 
+var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9 ]+")
+
 type Channel struct {
 	number string
 	name string
@@ -68,6 +70,10 @@ func downloadFile(url string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
+func sanitizeName(input string) string {
+	return strings.Trim(cleanNameRegex.ReplaceAllString(input, ""), " ")
+}
+
 func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 
 	mediaPlayList, err := parseM3UFile(m3uPath)
@@ -85,12 +91,7 @@ func getChannelPlaylist(m3uPath string) ([]Channel, error) {
 		encodedStreamURL := base64.StdEncoding.EncodeToString([]byte(segment.URI))
 		modifiedSegmentURI := listenUrl + "/stream/" + encodedStreamURL
 
-
-		reg, err := regexp.Compile("[^a-zA-Z0-9 ]+")
-		if err != nil {
-			log.Fatal(err)
-		}
-		cleanSegmentName := strings.Trim(reg.ReplaceAllString(segment.Title, ""), " ")
+		cleanSegmentName := sanitizeName(segment.Title)
 
 		log.Info("Adding channel{" + "0." + strconv.Itoa(index) + "," + cleanSegmentName + "," + modifiedSegmentURI + "}")
 		channels = append(channels, Channel{"0." + strconv.Itoa(index), cleanSegmentName, modifiedSegmentURI})
