@@ -1,5 +1,6 @@
 # muxy
 Emulates a HDHomeRun device while streaming from M3U IPTV streams.
+
 Add `localhost:8080` as a DVR tuner in Plex.
 
 ## Usage
