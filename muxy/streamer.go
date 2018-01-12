@@ -16,6 +16,7 @@ func waitForNextSegment() {
 }
 
 func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
+
 	streamID := filepath.Base(channelPlaylist)
 	streamID = strings.TrimSuffix(streamID, filepath.Ext(streamID))
 
@@ -80,9 +81,11 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 			}
 
 			if response.StatusCode != http.StatusOK {
-				log.Warning("Status code is " + strconv.Itoa(response.StatusCode))
+				log.Warning("Status code for segment is " + strconv.Itoa(response.StatusCode))
 				response.Body.Close()
-				continue
+
+				sendError(writer)
+				return
 			}
 
 			var segmentBytes []byte
@@ -99,6 +102,8 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 			waitForNextSegment()
 		}
+
+
 	}
 
 }
