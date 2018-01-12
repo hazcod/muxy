@@ -38,7 +38,7 @@ func downloadFile(url string) ([]byte, error) {
 		return nil, errors.New("Could not request file: " + err.Error())
 	}
 
-	req.Header.Set("User-Agent", "vlc 1.1.0-git-20100330-0003")
+	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
 
 	if err != nil {

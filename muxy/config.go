@@ -6,7 +6,7 @@ var m3ufile = "playlist.m3u"
 var listenPort = 8080
 var listenHost = "localhost"
 var tunerCount = 1
-
+var userAgent = "QuickTime/7.5";
 var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
 var deviceInfo = map[string]string{
 	"FriendlyName": "muxy",
