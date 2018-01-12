@@ -143,6 +143,9 @@ func SetListenPort(port int) {
 }
 
 func RunListener() {
+
+	listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
+
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", getDeviceXmlInfo).Methods("GET")

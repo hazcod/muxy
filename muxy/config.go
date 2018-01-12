@@ -1,14 +1,12 @@
 package muxy
 
-import "strconv"
-
 var m3ufile string
 var listenPort int
 var listenHost string
 var tunerCount int
+var listenUrl string
 
 var userAgent = "VLC";
-var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
 
 var deviceInfo = map[string]interface{}{
 	"FriendlyName": "muxy",
