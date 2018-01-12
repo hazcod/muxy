@@ -53,7 +53,7 @@ func streamChannel(w http.ResponseWriter, r *http.Request) {
 
 func getLineupStatus(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, map[string]interface{}{
-		"ScanInProgress": 1,
+		"ScanInProgress": 0,
 		"ScanPossible": 1,
 		"Source": "Cable",
 		"SourceList": []string{"Cable"},
@@ -101,12 +101,12 @@ func getDeviceXmlInfo(w http.ResponseWriter, r *http.Request) {
     <URLBase>http://` + listenHost + `</URLBase>
     <device>
         <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
-        <friendlyName>muxy</friendlyName>
-        <manufacturer>Silicondust</manufacturer>
-        <modelName>HDTC-2US</modelName>
-        <modelNumber>HDTC-2US</modelNumber>
+        <friendlyName>` + deviceInfo["FriendlyName"].(string) + `</friendlyName>
+        <manufacturer>` + deviceInfo["Manufacturer"].(string) + `</manufacturer>
+        <modelName>` + deviceInfo["ModelNumber"].(string) + `</modelName>
+        <modelNumber>` + deviceInfo["ModelNumber"].(string) + `</modelNumber>
         <serialNumber></serialNumber>
-        <UDN>uuid:12345678</UDN>
+        <UDN>uuid:` + deviceInfo["DeviceID"].(string) + `</UDN>
     </device>
 </root>`
 	w.Write([]byte(str))
@@ -145,18 +145,17 @@ func SetListenPort(port int) {
 func RunListener() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/device.json{f:.*}", getDeviceInfo).Methods("GET", "POST")
-	router.HandleFunc("/discover.json{f:.*}", getDeviceInfo).Methods("GET", "POST")
+	router.HandleFunc("/", getDeviceXmlInfo).Methods("GET")
+	router.HandleFunc("/device.xml", getDeviceXmlInfo).Methods("GET")
+	router.HandleFunc("/device.json", getDeviceInfo).Methods("GET")
 
-	router.HandleFunc("/lineup_status.json{f:.*}", getLineupStatus).Methods("GET", "POST")
-	router.HandleFunc("/lineup.json{f:.*}", getLineup).Methods("GET", "POST")
+	router.HandleFunc("/discover.json", getDeviceInfo).Methods("GET")
 
-	router.HandleFunc("/lineup.post{f:.*}", doNothing).Methods("GET", "POST")
+	router.HandleFunc("/lineup_status.json", getLineupStatus).Methods("GET")
+	router.HandleFunc("/lineup.json", getLineup).Methods("GET")
+	router.HandleFunc("/lineup.post", doNothing).Methods("GET", "POST")
 
 	router.HandleFunc("/stream/{link:.*}", streamChannel).Methods("GET", "POST")
-
-	router.HandleFunc("/", getDeviceXmlInfo).Methods("GET", "POST")
-	router.HandleFunc("/device.xml", getDeviceXmlInfo).Methods("GET", "POST")
 
 	err := http.ListenAndServe(
 		listenHost + ":" + strconv.Itoa(listenPort),
