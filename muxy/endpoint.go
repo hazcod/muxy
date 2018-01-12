@@ -35,11 +35,11 @@ func sendJson(w http.ResponseWriter, data interface{}) {
 }
 
 func getLineupStatus(w http.ResponseWriter, r *http.Request) {
-	sendJson(w, map[string]string{
+	sendJson(w, map[string]interface{}{
 		"ScanInProgress": "0",
 		"ScanPossible": "0",
 		"Source": "Cable",
-		"SourceList": "[\"Cable\"]",
+		"SourceList": []string{"Cable", "Antenna"},
 	})
 }
 
@@ -56,7 +56,7 @@ func getLineup(w http.ResponseWriter, r *http.Request) {
 
 	for _, channel := range channels {
 		lineup = append(lineup, map[string]string{
-			"GuideNumber": strconv.Itoa(channel.number),
+			"GuideNumber": channel.number,
 			"GuideName": channel.name,
 			"URL": channel.url,
 		})
@@ -87,6 +87,26 @@ func logRequest(handler http.Handler) http.Handler {
 	})
 }
 
+func SetM3UFile(path string) {
+	m3ufile = path
+}
+
+func SetMaxStreams(num int) {
+	tunerCount = num
+}
+
+func SetListenHost(host string) {
+	listenHost = host
+}
+
+func SetListenPort(port int) {
+	listenPort = port
+}
+
+func SetTempM3UPath(path string) {
+	tempM3Upath = path
+}
+
 func RunListener() {
 	router := mux.NewRouter()
 
@@ -97,6 +117,8 @@ func RunListener() {
 	router.HandleFunc("/lineup.json", getLineup).Methods("GET", "POST")
 
 	router.HandleFunc("/lineup.post", doNothing).Methods("GET", "POST")
+
+	removeTempFile()
 
 	err := http.ListenAndServe(
 		listenHost + ":" + strconv.Itoa(listenPort),

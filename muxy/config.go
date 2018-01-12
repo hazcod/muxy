@@ -2,13 +2,15 @@ package muxy
 
 import "strconv"
 
-var m3ufile = "/Users/niels/Downloads/tv_channels_hazcod_plus.m3u";
-var listenPort = 8080;
-var listenHost = "localhost";
-var tunerCount = 1;
-var tempM3Upath = "/tmp/m3u";
+var m3ufile = "playlist.m3u"
+var listenPort = 8080
+var listenHost = "localhost"
+var tunerCount = 1
+var tempM3Upath = "/tmp/m3u"
+var tempTSpath = "/tmp/ts"
+var cacheTimeMinutes = 30
 
-var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort);
+var listenUrl = "http://" + listenHost + ":" + strconv.Itoa(listenPort)
 var deviceInfo = map[string]string{
 	"FriendlyName": "muxy",
 	"Manufacturer" : "Silicondust",
@@ -17,7 +19,7 @@ var deviceInfo = map[string]string{
 	"TunerCount": strconv.Itoa(tunerCount),
 	"FirmwareVersion": "20150826",
 	"DeviceID": "12345678",
-	"DeviceAuth": "LEEFKLjgr390234935wq8wiksdL;aDJFDSKJBANKL;S2002222",
+	"DeviceAuth": "test1234",
 	"BaseURL": listenUrl + "/",
 	"LineupURL": listenUrl + "/lineup.json",
-};
+}
