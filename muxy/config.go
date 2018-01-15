@@ -6,10 +6,12 @@ var listenHost string
 var tunerCount int
 var listenUrl string
 
-var userAgent = "VLC";
+var userAgent = "VLC"
+var maxSegmentErrors = 2
 
+// taken from https://github.com/jblachly/dvr/blob/master/HDHomeRun_notes.md
 var deviceInfo = map[string]interface{}{
-	"FriendlyName": "muxy",
+	"FriendlyName": "HDHomeRun CONNECT",
 	"Manufacturer" : "Silicondust",
 	"ModelNumber": "HDHR4-2US",
 	"FirmwareName": "hdhomerun4_atsc",

@@ -17,6 +17,7 @@ import (
 
 var cleanNameRegex, _ = regexp.Compile("[^a-zA-Z0-9 ]+")
 
+
 type Channel struct {
 	number string
 	name string
@@ -91,7 +92,8 @@ func downloadReadFile(url string) ([]byte, error) {
 
 	if len(bodyBytes) == 0 {
 		// retry because something went wrong apparently
-		time.Sleep(time.Second * 5)
+		log.Info("Retrying download..")
+		time.Sleep(time.Second * 2)
 		return downloadReadFile(url)
 	}
 
@@ -182,7 +184,7 @@ func parseM3UFile(path string) (MediaPlaylistWrapper, error) {
 			mediaWrappper.MediaPlaylist.Segments = mediaWrappper.MediaPlaylist.Segments[0 : mediaWrappper.MediaPlaylist.Count()-1]
 
 		default:
-			return mediaWrappper, errors.New("unknown m3u type")
+			return mediaWrappper, errors.New("unknown m3u type: ")
 	}
 
 	return mediaWrappper, nil

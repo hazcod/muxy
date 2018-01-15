@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	log "github.com/golang/glog"
+	"os"
 )
 
 func main() {
@@ -16,8 +17,8 @@ func main() {
 	m3uPath := flag.Arg(0)
 
 	if m3uPath == "" {
-		fmt.Print("Usage: ./muxyProxy <path-to-m3u>")
-		return
+		fmt.Print("Usage: ./muxyProxy <path-or-url-to-m3u-file>")
+		os.Exit(1)
 	}
 
 	muxy.SetListenHost(*listenHost)

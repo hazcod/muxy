@@ -7,11 +7,12 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/golang/glog"
 	"encoding/base64"
+	"os"
 )
 
-func sendError(w http.ResponseWriter) {
-	log.Info("Sending errorcode 500")
-	w.WriteHeader(500)
+func sendError(w http.ResponseWriter, errorCode int) {
+	log.Info("Sending errorcode: " + strconv.Itoa(errorCode))
+	w.WriteHeader(errorCode)
 }
 
 func sendJson(w http.ResponseWriter, data interface{}) {
@@ -22,7 +23,7 @@ func sendJson(w http.ResponseWriter, data interface{}) {
 
 		if err != nil {
 			log.Error("Could not encode to JSON: " + err.Error())
-			sendError(w)
+			sendError(w, 500)
 			return
 		}
 
@@ -44,7 +45,7 @@ func streamChannel(w http.ResponseWriter, r *http.Request) {
 	decodedStreamURI, err := base64.StdEncoding.DecodeString(encodedStreamURI)
 	if err != nil {
 		log.Error("Could not decode stream URI: " + encodedStreamURI)
-		sendError(w)
+		sendError(w, 500)
 		return
 	}
 
@@ -54,9 +55,9 @@ func streamChannel(w http.ResponseWriter, r *http.Request) {
 func getLineupStatus(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, map[string]interface{}{
 		"ScanInProgress": 0,
-		"ScanPossible": 1,
+		"ScanPossible": 0,
 		"Source": "Cable",
-		"SourceList": []string{"Cable"},
+		"SourceList": []string{ "Cable" },
 	})
 }
 
@@ -65,7 +66,7 @@ func getLineup(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Error("Could not get channels: " + err.Error())
-		sendError(w)
+		sendError(w, 500)
 		return
 	}
 
@@ -98,14 +99,14 @@ func getDeviceXmlInfo(w http.ResponseWriter, r *http.Request) {
         <major>1</major>
         <minor>0</minor>
     </specVersion>
-    <URLBase>http://` + listenHost + `</URLBase>
+    <URLBase>` + listenUrl + `</URLBase>
     <device>
         <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
         <friendlyName>` + deviceInfo["FriendlyName"].(string) + `</friendlyName>
         <manufacturer>` + deviceInfo["Manufacturer"].(string) + `</manufacturer>
         <modelName>` + deviceInfo["ModelNumber"].(string) + `</modelName>
         <modelNumber>` + deviceInfo["ModelNumber"].(string) + `</modelNumber>
-        <serialNumber></serialNumber>
+        <serialNumber>` + deviceInfo["DeviceID"].(string) + `</serialNumber>
         <UDN>uuid:` + deviceInfo["DeviceID"].(string) + `</UDN>
     </device>
 </root>`
@@ -167,5 +168,6 @@ func RunListener() {
 
 	if err != nil {
 		log.Error("Could not start listener: " + err.Error())
+		os.Exit(1)
 	}
 }

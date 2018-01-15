@@ -12,8 +12,6 @@ import (
 	"bufio"
 )
 
-var readBufSizeByes = 10000;
-
 func waitForNextSegment() {
 	time.Sleep(9 * time.Second)
 }
@@ -26,11 +24,12 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 	segmentHostUrl, err := url.Parse(channelPlaylist)
 	if err != nil {
 		log.Error("Could not parse host from " + channelPlaylist)
-		sendError(writer)
+		sendError(writer, 500)
 		return
 	}
 
 	segmentHost := segmentHostUrl.Scheme + "://" + segmentHostUrl.Host
+	currentErrors := 0
 
 	log.Info("Streaming stream " + streamID)
 
@@ -39,15 +38,21 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 		segments, err := FetchStreamSegments(channelPlaylist, streamID)
 		if err != nil {
 			log.Error("Could not fetch channel playlist: " + err.Error())
-			sendError(writer)
+			sendError(writer, 500)
 			return
 		}
 
 		for _, segment := range segments {
 
+			if currentErrors >= maxSegmentErrors {
+				log.Error("Reached max amount of segment errors")
+				sendError(writer, 500)
+				return
+			}
+
 			if ! strings.HasSuffix(segment.url, ".ts") {
 				log.Error("Not a TS file: " + segment.url)
-				sendError(writer)
+				sendError(writer, 500)
 				return
 			}
 
@@ -58,8 +63,15 @@ func startChannelStream(writer http.ResponseWriter, channelPlaylist string) {
 
 			body, err := downloadStreamFile(fullSegmentUrl)
 			if err != nil {
-				body.Close()
-				log.Error("Could not download segment: " + err.Error())
+				if nil != body {
+					body.Close()
+				}
+
+				log.Error("Skipping segment; could not download: " + err.Error())
+				log.Info("Segment error count is now " + strconv.Itoa(currentErrors))
+
+				currentErrors =  currentErrors + 1
+
 				continue
 			}
 
@@ -110,9 +122,11 @@ func FetchStreamSegments(url string, streamID string) ([]Channel, error) {
 		}
 
 		cleanSegmentTitle := sanitizeName(segment.Title)
+		segmentNumber := "0." + strconv.Itoa(index)
 
-		log.Info("Adding Segment{" + "0." + strconv.Itoa(index) + "," + cleanSegmentTitle + "," + segment.URI + "}")
-		channels = append(channels, Channel{"0." + strconv.Itoa(index), cleanSegmentTitle, segment.URI})
+		log.Info("Adding Segment{" + segmentNumber + "," + cleanSegmentTitle + "," + segment.URI + "}")
+
+		channels = append(channels, Channel{segmentNumber, cleanSegmentTitle, segment.URI})
 	}
 
 	return channels, nil
