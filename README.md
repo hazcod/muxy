@@ -17,7 +17,7 @@ with the download link base64 encoded in the URI. When plex requests a file, `mu
 and serves the MPEG stream to Plex.
 
 ## Building
-You just need `go` and `make`. To build, do a `make`.
+You just need `go` and `automake`. To build, do a `make` in the source directory. Your executable will be `muxyProxy`.
 
 ## Credits
 Big thanks goes out to @jkaberg for his work on `tvhProxy`, where I got the idea from.
