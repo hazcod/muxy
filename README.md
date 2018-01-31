@@ -16,6 +16,10 @@ It reads your M3U8 playlist to show Plex a channel list. The download link in th
 with the download link base64 encoded in the URI. When plex requests a file, `muxy` downloads the cronological TS files
 and serves the MPEG stream to Plex.
 
+## Debugging
+Run muxy in verbose logging mode: `./muxyProxy -v 10 -logtostderr <path-to-m3u>`
+Try accessing `http://localhost:8080/lineup.json` and try out one of the stream URLs. (e.g. `http://localhost:8080/stream/xxxxx`)
+
 ## Building
 You just need `go` and `automake`. To build, do a `make` in the source directory. Your executable will be `muxyProxy`.
 
