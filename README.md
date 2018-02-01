@@ -3,6 +3,10 @@ Emulates a HDHomeRun device while streaming from M3U IPTV streams.
 
 Add `localhost:8080` as a DVR tuner in Plex.
 
+## WARNING
+As of now, Plex does accept TS streams, meaning this code is far too complex for what it's worth.
+Please check out a much simpler implementation such as `telly` instead: https://github.com/tombowditch/telly
+
 ## Usage
 `./muxyProxy http://site.com/my-iptv-playlist.m3u8`
 
